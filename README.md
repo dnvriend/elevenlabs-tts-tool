@@ -421,6 +421,58 @@ elevenlabs-tty-tool synthesize "SUMMARY_TO_THE_USER"
 
 **Note:** This feature requires `elevenlabs-tty-tool` to be installed and configured with your API key.
 
+### Voice-Enabled Workflow with SuperWhisper
+
+Combine `elevenlabs-tty-tool` with [Claude Code](https://www.anthropic.com/claude/code) and [SuperWhisper](https://superwhisper.com/) for a complete voice-enabled development workflow.
+
+**The Power Trio:**
+1. **SuperWhisper** - Voice input: Speak commands to Claude Code
+2. **Claude Code** - AI assistance: Execute tasks and generate code
+3. **elevenlabs-tty-tool** - Voice output: Get audio notifications when tasks complete
+
+**Why This Works:**
+
+Speaking is **faster than typing**. Instead of typing long commands or descriptions:
+```bash
+# Traditional typing (slow):
+"Create a new Python function that parses JSON files and extracts all email addresses..."
+
+# Voice with SuperWhisper (fast):
+🎤 Just speak naturally and SuperWhisper transcribes instantly
+```
+
+**Perfect For:**
+- 🏃 **Long-Running Tasks**: Start a build with voice, get audio notification when done
+- 🔄 **Multi-Step Workflows**: Chain tasks with voice commands, hear progress updates
+- 💻 **Hands-Free Development**: Code while away from keyboard, get notified when ready
+- 🎯 **Context Switching**: Start tasks via voice, move to other work, return on audio alert
+
+**Example Workflow:**
+```bash
+# 1. Speak to SuperWhisper: "Run the test suite and let me know when it's done"
+# 2. Claude Code executes: pytest tests/
+# 3. elevenlabs-tty-tool announces: "[happy] All tests passed! 47 tests completed."
+
+# 4. Speak: "Now build the Docker image and push to registry"
+# 5. Claude Code executes: docker build && docker push
+# 6. elevenlabs-tty-tool announces: "[excited] Docker image built and pushed successfully!"
+```
+
+**Setup:**
+1. Install [SuperWhisper](https://superwhisper.com/) (macOS voice-to-text)
+2. Configure Claude Code with TTS Summary output style (see above)
+3. Use voice commands to control Claude Code
+4. Receive audio notifications on task completion
+
+**Benefits:**
+- ✅ **10x faster input** - Speak naturally instead of typing
+- ✅ **Hands-free operation** - No keyboard required for basic tasks
+- ✅ **Multitasking enabled** - Start tasks, switch context, return on notification
+- ✅ **Reduced cognitive load** - Voice is more natural than typing technical commands
+- ✅ **Accessibility** - Works great for users with typing difficulties
+
+**Note:** SuperWhisper is currently macOS-only. For other platforms, consider [Whisper Desktop](https://github.com/Const-me/Whisper) or similar voice input tools.
+
 ## Library Usage
 
 Use `elevenlabs-tty-tool` as a Python library in your projects:
