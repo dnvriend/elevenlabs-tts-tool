@@ -1,7 +1,7 @@
 # mise configuration for elevenlabs-tty-tool
 
 [tools]
-python = "3.14"
+python = "3.13"
 
 [env]
 # Ensure project uses local virtual environment

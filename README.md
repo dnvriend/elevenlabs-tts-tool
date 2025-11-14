@@ -1,43 +1,100 @@
 # elevenlabs-tty-tool
 
-[![Python Version](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://github.com/python/mypy)
 [![AI Generated](https://img.shields.io/badge/AI-Generated-blueviolet.svg)](https://www.anthropic.com/claude)
 [![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-5A67D8.svg)](https://www.anthropic.com/claude/code)
 
-A CLI that enables creating tts using the elevenlabs TTS API
+A command-line tool for ElevenLabs text-to-speech synthesis with human-friendly voice selection.
 
 ## Table of Contents
 
 - [About](#about)
+- [Why CLI-First?](#why-cli-first)
+- [Use Cases](#use-cases)
 - [Features](#features)
 - [Installation](#installation)
+- [Configuration](#configuration)
 - [Usage](#usage)
+  - [Synthesize Command](#synthesize-command)
+  - [List Voices](#list-voices)
+  - [Update Voices](#update-voices)
+- [Advanced Features](#advanced-features)
+  - [Emotion Control](#emotion-control)
+  - [Pause Control (SSML)](#pause-control-ssml)
+- [Free Tier Limitations](#free-tier-limitations)
+- [Claude Code Integration](#claude-code-integration)
+- [Library Usage](#library-usage)
 - [Development](#development)
-- [Testing](#testing)
-- [Contributing](#contributing)
+- [Resources](#resources)
 - [License](#license)
-- [Author](#author)
 
 ## About
 
-`elevenlabs-tty-tool` is a Python CLI tool built with modern tooling and best practices.
+### What is ElevenLabs?
+
+[ElevenLabs](https://elevenlabs.io) provides cutting-edge AI voice synthesis technology that generates natural-sounding speech from text. Their Turbo v2.5 model offers fast, high-quality text-to-speech with a wide variety of realistic voices.
+
+### What is elevenlabs-tty-tool?
+
+`elevenlabs-tty-tool` transforms the ElevenLabs API into a professional, composable CLI tool designed for:
+
+- **Agent-Friendly Design**: Structured commands and error messages enable AI agents (like Claude Code) to reason and act effectively in ReAct loops
+- **Composable Architecture**: JSON output to stdout, logs to stderr - perfect for piping and automation
+- **Reusable Building Blocks**: Commands serve as foundations for Claude Code skills, MCP servers, shell scripts, or custom workflows
+- **Dual-Mode Operation**: Use as both CLI tool and Python library
+- **Production Quality**: Type-safe with strict mypy checks, comprehensive tests, and clear error handling with suggested fixes
+
+## Why CLI-First?
+
+Traditional API wrappers force you to write code for every interaction. CLI-first design provides:
+
+1. **Immediate Productivity**: Run commands without writing wrapper code
+2. **Automation Ready**: Pipe commands together in shell scripts
+3. **Agent Integration**: AI agents can invoke commands directly
+4. **Human & Machine Friendly**: Works equally well for developers and automation
+
+## Use Cases
+
+- 🎙️ **Voice Notifications**: Add TTS to CI/CD pipelines and monitoring systems
+- 📚 **Content Creation**: Generate audiobooks, podcasts, and video narration
+- 🤖 **AI Agent Integration**: Build voice-enabled Claude Code skills and MCP servers
+- 🛠️ **Development Workflows**: Create audio alerts for long-running processes
+- 🎯 **Accessibility**: Convert text content to audio for accessibility features
+- 🔊 **Testing**: Test voice UIs and audio systems
+- 🔔 **Claude Code Hooks**: Use as notification system for Claude Code events (see [Claude Code Integration](#claude-code-integration))
 
 ## Features
 
-- ✅ Type-safe with mypy strict mode
-- ✅ Linted with ruff
-- ✅ Tested with pytest
-- ✅ Modern Python tooling (uv, mise, click)
+- ✅ **Two Synthesis Modes**: Play through speakers or save to WAV file
+- ✅ **42 Premium Voices**: Curated selection with human-friendly names (rachel, adam, charlotte, etc.)
+- ✅ **Voice Discovery**: List and filter voices by gender, age, and accent
+- ✅ **Flexible Input**: Accept text from arguments or stdin (pipe support)
+- ✅ **CLI & Library**: Use as command-line tool or import as Python library
+- ✅ **Type Safety**: Strict mypy checks throughout
+- ✅ **Comprehensive Tests**: Full test coverage with pytest
+- ✅ **Agent-Friendly Errors**: Clear error messages with suggested fixes
+- ✅ **Modern Tooling**: Built with uv, mise, click, and Python 3.13+
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.14 or higher
+- Python 3.13 or higher
 - [uv](https://github.com/astral-sh/uv) package manager
+- ElevenLabs API key ([get yours here](https://elevenlabs.io/app/settings/api-keys))
+- **macOS users**: [FFmpeg](https://ffmpeg.org/) for audio playback
+
+```bash
+# macOS: Install FFmpeg via Homebrew
+brew install ffmpeg
+
+# Linux: Install via package manager
+sudo apt-get install ffmpeg  # Debian/Ubuntu
+sudo yum install ffmpeg      # RedHat/CentOS
+```
 
 ### Install from source
 
@@ -50,32 +107,274 @@ cd elevenlabs-tty-tool
 uv tool install .
 ```
 
-### Install with mise (recommended for development)
-
-```bash
-cd elevenlabs-tty-tool
-mise trust
-mise install
-uv sync
-uv tool install .
-```
-
 ### Verify installation
 
 ```bash
 elevenlabs-tty-tool --version
 ```
 
-## Usage
+## Configuration
 
-### Basic Usage
+### Set API Key
 
 ```bash
-# Show help
-elevenlabs-tty-tool --help
+# Export API key (required for all commands)
+export ELEVENLABS_API_KEY='your-api-key-here'
 
-# Run the tool
-elevenlabs-tty-tool
+# Or add to your shell profile (~/.zshrc, ~/.bashrc)
+echo 'export ELEVENLABS_API_KEY="your-api-key"' >> ~/.zshrc
+```
+
+Get your API key from: https://elevenlabs.io/app/settings/api-keys
+
+## Usage
+
+### Synthesize Command
+
+Convert text to speech with various options:
+
+```bash
+# Basic usage - play through speakers
+elevenlabs-tty-tool synthesize "Hello world"
+
+# Use a different voice
+elevenlabs-tty-tool synthesize "Hello world" --voice adam
+elevenlabs-tty-tool synthesize "Cheerio mate" --voice charlotte
+
+# Read from stdin
+echo "Hello from stdin" | elevenlabs-tty-tool synthesize --stdin
+cat article.txt | elevenlabs-tty-tool synthesize --stdin
+
+# Save to MP3 file (default format)
+elevenlabs-tty-tool synthesize "Save this" --output speech.mp3
+
+# Save to WAV file (PCM format)
+elevenlabs-tty-tool synthesize "Save this" --output speech.wav --format pcm_24000
+
+# Lower quality MP3 (smaller file size)
+elevenlabs-tty-tool synthesize "Save this" --output speech.mp3 --format mp3_22050_32
+
+# Combine options
+cat blog-post.txt | elevenlabs-tty-tool synthesize --stdin \
+    --voice rachel --output narration.mp3 --format mp3_44100_128
+```
+
+#### Output Formats
+
+The `--format` option controls audio quality and file size. Different formats require different ElevenLabs subscription tiers:
+
+**Available on all tiers:**
+- `mp3_44100_128` - MP3 at 44.1kHz, 128kbps (default, ~17KB for short text)
+- `mp3_22050_32` - MP3 at 22.05kHz, 32kbps (lower quality, ~6KB for short text)
+- `pcm_16000` - PCM/WAV at 16kHz
+- `pcm_22050` - PCM/WAV at 22.05kHz
+- `pcm_24000` - PCM/WAV at 24kHz (~67KB for short text)
+- `ulaw_8000` - μ-law at 8kHz (for Twilio)
+
+**Creator tier and above:**
+- `mp3_44100_192` - MP3 at 44.1kHz, 192kbps (higher quality)
+
+**Pro tier and above:**
+- `pcm_44100` - PCM/WAV at 44.1kHz (highest quality, largest file size)
+
+**Examples:**
+```bash
+# Default MP3 (works on all tiers)
+elevenlabs-tty-tool synthesize "Text" --output audio.mp3
+
+# High-quality WAV (Pro tier required)
+elevenlabs-tty-tool synthesize "Text" --output audio.wav --format pcm_44100
+
+# Lower bandwidth (works on all tiers)
+elevenlabs-tty-tool synthesize "Text" --output audio.mp3 --format mp3_22050_32
+```
+
+### List Voices
+
+Discover available voices with characteristics:
+
+```bash
+# List all 42 available voices
+elevenlabs-tty-tool list-voices
+
+# Find specific voices with grep
+elevenlabs-tty-tool list-voices | grep British
+elevenlabs-tty-tool list-voices | grep "female.*young"
+elevenlabs-tty-tool list-voices | grep male
+```
+
+**Popular Voices:**
+- `rachel` - Calm and friendly American female (default)
+- `adam` - Deep, authoritative American male
+- `charlotte` - Seductive and calm British female
+- `antoni` - Well-rounded American male
+- `bella` - Soft and pleasant American female
+- `daniel` - Deep and authoritative British male
+
+### Update Voices
+
+Update the voice lookup table from ElevenLabs API:
+
+```bash
+# Update default voice lookup (saves to ~/.config/elevenlabs-tty-tool/)
+elevenlabs-tty-tool update-voices
+
+# Save to custom location
+elevenlabs-tty-tool update-voices --output custom_voices.json
+```
+
+The voice lookup is stored in `~/.config/elevenlabs-tty-tool/voices_lookup.json` and takes precedence over the package default.
+
+## Advanced Features
+
+### Emotion Control
+
+ElevenLabs v3 models support emotional tags for expressive speech:
+
+```bash
+# Happy greeting
+elevenlabs-tty-tool synthesize "[happy] Welcome! We're excited to have you here."
+
+# Sad message
+elevenlabs-tty-tool synthesize "[sad] I'm sorry to hear that..."
+
+# Excited announcement
+elevenlabs-tty-tool synthesize "[excited] Amazing news! Your project is approved!"
+```
+
+**Available Emotions:** `[happy]`, `[excited]`, `[sad]`, `[angry]`, `[nervous]`, `[curious]`, `[cheerfully]`, `[playfully]`, `[mischievously]`, `[resigned tone]`, `[flatly]`, `[deadpan]`
+
+**Speech Characteristics:** `[whispers]`, `[laughs]`, `[gasps]`, `[sighs]`, `[pauses]`, `[hesitates]`, `[stammers]`
+
+### Pause Control (SSML)
+
+Add natural pauses using SSML break tags:
+
+```bash
+# Add 1-second pause
+elevenlabs-tty-tool synthesize "Welcome <break time=\"1.0s\" /> to our service."
+
+# Multiple pauses
+elevenlabs-tty-tool synthesize "First point <break time=\"0.5s\" /> Second point <break time=\"0.5s\" /> Third point."
+```
+
+**Note:** Keep pauses under 3 seconds and limit to 2-4 breaks per generation for best results.
+
+### Combining Emotions and Pauses
+
+```bash
+# Emotional speech with pauses
+elevenlabs-tty-tool synthesize "[happy] Good morning! <break time=\"0.5s\" /> [cheerfully] I hope you're having a great day."
+```
+
+For comprehensive documentation on emotions, pauses, SSML, and voice settings, see:
+- [Emotions and Pauses Guide](references/emotions-and-pauses.md)
+
+## Free Tier Limitations
+
+**ElevenLabs Free Tier:**
+- ✅ 10,000-20,000 characters per month (as of 2024-2025)
+- ✅ Access to all 42 premade voices
+- ✅ Create up to 3 custom voices
+- ✅ MP3 formats (all bitrates)
+- ✅ Basic SSML support
+- ✅ Emotional tags (v3 models)
+- ❌ No commercial license
+- ❌ PCM 44.1kHz format requires Pro tier
+- ⚠️ Max 2,500 characters per single generation
+
+**Recommended for:**
+- Personal projects
+- Experimentation
+- Development and testing
+- Non-commercial use
+
+For detailed free tier information and upgrade options, see:
+- [Free Tier Research](references/free-tier.md)
+- [ElevenLabs Pricing](https://elevenlabs.io/pricing)
+
+## Claude Code Integration
+
+Use `elevenlabs-tty-tool` as a notification system for Claude Code hooks to get audio alerts when tasks complete.
+
+### Setup Hook
+
+Create a notification hook in `~/.config/claude-code/hooks.json`:
+
+```json
+{
+  "hooks": {
+    "after_command": {
+      "type": "bash",
+      "command": "elevenlabs-tty-tool synthesize \"[happy] Task completed successfully!\" --voice rachel"
+    },
+    "on_error": {
+      "type": "bash",
+      "command": "elevenlabs-tty-tool synthesize \"[nervous] Error detected. Please check the output.\" --voice adam"
+    }
+  }
+}
+```
+
+### Use Cases
+
+**Task Completion Alerts:**
+```bash
+# After long-running build
+elevenlabs-tty-tool synthesize "[excited] Build completed!" --voice rachel
+```
+
+**Error Notifications:**
+```bash
+# On test failure
+elevenlabs-tty-tool synthesize "[sad] Tests failed. Please review." --voice adam
+```
+
+**Custom Workflows:**
+```bash
+# In your shell scripts
+make build && elevenlabs-tty-tool synthesize "[cheerfully] Build successful!" || \
+    elevenlabs-tty-tool synthesize "[nervous] Build failed!"
+```
+
+**Integration with Other Tools:**
+```bash
+# Combine with gemini-google-search-tool
+gemini-google-search-tool query "Latest AI news" | \
+    elevenlabs-tty-tool synthesize --stdin --voice charlotte --output news-summary.mp3
+```
+
+This allows you to:
+- Get audio alerts for completed tasks without monitoring the terminal
+- Hear error notifications while away from the screen
+- Create multi-step automation workflows with voice feedback
+- Build voice-enabled AI agent pipelines
+
+## Library Usage
+
+Use `elevenlabs-tty-tool` as a Python library in your projects:
+
+```python
+from elevenlabs_tty_tool import get_client, play_speech, save_speech
+from elevenlabs_tty_tool import VoiceManager
+from pathlib import Path
+
+# Initialize client
+client = get_client()
+
+# Get voice ID
+voice_manager = VoiceManager()
+voice_id = voice_manager.get_voice_id("rachel")
+
+# Play through speakers
+play_speech(client, "Hello from Python", voice_id)
+
+# Save to file
+save_speech(client, "Save this", voice_id, Path("output.wav"))
+
+# List available voices
+for name, profile in voice_manager.list_voices():
+    print(f"{name}: {profile.description}")
 ```
 
 ## Development
@@ -103,9 +402,8 @@ make lint             # Run linting with ruff
 make typecheck        # Run type checking with mypy
 make test             # Run tests with pytest
 make check            # Run all checks (lint, typecheck, test)
-make pipeline         # Run full pipeline (format, lint, typecheck, test, build, install-global)
+make pipeline         # Run full pipeline (format, check, build, install-global)
 make build            # Build package
-make run ARGS="..."   # Run elevenlabs-tty-tool locally
 make clean            # Remove build artifacts
 ```
 
@@ -113,57 +411,30 @@ make clean            # Remove build artifacts
 
 ```
 elevenlabs-tty-tool/
-├── elevenlabs_tty_tool/    # Main package
-│   ├── __init__.py
-│   ├── cli.py          # CLI entry point
-│   └── utils.py        # Utility functions
-├── tests/              # Test suite
-│   ├── __init__.py
-│   └── test_utils.py
-├── pyproject.toml      # Project configuration
-├── Makefile            # Development commands
-├── README.md           # This file
-├── LICENSE             # MIT License
-└── CLAUDE.md           # Development documentation
+├── elevenlabs_tty_tool/
+│   ├── __init__.py              # Public API exports
+│   ├── cli.py                   # CLI entry point
+│   ├── voices.py                # Voice management
+│   ├── voices_lookup.json       # Voice lookup table (42 voices)
+│   ├── core/                    # Core library functions
+│   │   ├── client.py           # ElevenLabs client
+│   │   └── synthesize.py       # TTS functions
+│   └── commands/                # CLI commands
+│       ├── synthesize_commands.py
+│       └── voice_commands.py
+├── tests/                       # Test suite
+├── pyproject.toml               # Project configuration
+├── Makefile                     # Development commands
+└── CLAUDE.md                    # Developer guide
 ```
 
-## Testing
+## Resources
 
-Run the test suite:
-
-```bash
-# Run all tests
-make test
-
-# Run tests with verbose output
-uv run pytest tests/ -v
-
-# Run specific test file
-uv run pytest tests/test_utils.py
-
-# Run with coverage
-uv run pytest tests/ --cov=elevenlabs_tty_tool
-```
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run the full pipeline (`make pipeline`)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use type hints for all functions
-- Write docstrings for public functions
-- Format code with `ruff`
-- Pass all linting and type checks
+- **ElevenLabs Documentation**: https://elevenlabs.io/docs
+- **API Reference**: https://elevenlabs.io/docs/api-reference
+- **Python SDK**: https://github.com/elevenlabs/elevenlabs-python
+- **Voice Library**: https://elevenlabs.io/voice-library
+- **Get API Key**: https://elevenlabs.io/app/settings/api-keys
 
 ## License
 
@@ -178,6 +449,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built with [Click](https://click.palletsprojects.com/) for CLI framework
+- [ElevenLabs](https://elevenlabs.io) for world-class TTS technology
 - Developed with [uv](https://github.com/astral-sh/uv) for fast Python tooling
 
 ---
@@ -186,4 +458,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This project was generated using [Claude Code](https://www.anthropic.com/claude/code), an AI-powered development tool by [Anthropic](https://www.anthropic.com/). Claude Code assisted in creating the project structure, implementation, tests, documentation, and development tooling.
 
-Made with ❤️ using Python 3.14
+Made with ❤️ using Python 3.13+

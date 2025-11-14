@@ -1,7 +1,22 @@
-"""elevenlabs-tty-tool: A CLI that enables creating tts using the elevenlabs TTS API
+"""
+elevenlabs-tty-tool: Professional ElevenLabs TTS CLI.
+
+A command-line tool for text-to-speech synthesis using ElevenLabs API.
+Supports both speaker playback and WAV file output.
 
 Note: This code was generated with assistance from AI coding tools
 and has been reviewed and tested by a human.
 """
 
+from elevenlabs_tty_tool.core import get_client, play_speech, save_speech
+from elevenlabs_tty_tool.voices import VoiceManager, VoiceProfile
+
 __version__ = "0.1.0"
+
+__all__ = [
+    "get_client",
+    "play_speech",
+    "save_speech",
+    "VoiceManager",
+    "VoiceProfile",
+]

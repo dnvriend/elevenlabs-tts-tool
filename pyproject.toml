@@ -1,10 +1,11 @@
 [project]
 name = "elevenlabs-tty-tool"
 version = "0.1.0"
-description = "A CLI that enables creating tts using the elevenlabs TTS API"
-requires-python = ">=3.14"
+description = "Professional command-line tool for ElevenLabs text-to-speech synthesis"
+requires-python = ">=3.13"
 dependencies = [
     "click>=8.1.7",
+    "elevenlabs>=1.0.0",
 ]
 authors = [
     {name = "Dennis Vriend", email = "dvriend@ilionx.com"}
@@ -28,14 +29,14 @@ dev = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = []
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
