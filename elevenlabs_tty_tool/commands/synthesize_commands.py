@@ -12,6 +12,7 @@ import click
 
 from elevenlabs_tty_tool.core.client import get_client
 from elevenlabs_tty_tool.core.synthesize import play_speech, read_from_stdin, save_speech
+from elevenlabs_tty_tool.models import DEFAULT_MODEL, get_deprecation_warning, validate_model
 from elevenlabs_tty_tool.voices import VoiceManager
 
 
@@ -41,7 +42,15 @@ from elevenlabs_tty_tool.voices import VoiceManager
     default="mp3_44100_128",
     help="Output format (default: mp3_44100_128). Common: mp3_44100_128, pcm_44100, pcm_24000",
 )
-def synthesize(text: str | None, stdin: bool, voice: str, output: Path | None, format: str) -> None:
+@click.option(
+    "--model",
+    "-m",
+    default=DEFAULT_MODEL,
+    help=f"Model ID (default: {DEFAULT_MODEL}). Run 'elevenlabs-tty-tool list-models' to see all.",
+)
+def synthesize(
+    text: str | None, stdin: bool, voice: str, output: Path | None, format: str, model: str
+) -> None:
     """
     Convert text to speech using ElevenLabs TTS.
 
@@ -52,12 +61,27 @@ def synthesize(text: str | None, stdin: bool, voice: str, output: Path | None, f
     Examples:
 
     \b
-        # Play text with default voice (rachel)
+        # Play text with default voice (rachel) and default model (turbo v2.5)
         elevenlabs-tty-tool synthesize "Hello world"
 
     \b
         # Use different voice
         elevenlabs-tty-tool synthesize "Hello world" --voice adam
+
+    \b
+        # Use highest quality model
+        elevenlabs-tty-tool synthesize "Hello world" \\
+            --model eleven_multilingual_v2
+
+    \b
+        # Ultra-low latency for real-time applications
+        elevenlabs-tty-tool synthesize "Hello world" \\
+            --model eleven_flash_v2_5
+
+    \b
+        # Emotional expression (requires eleven_v3 model)
+        elevenlabs-tty-tool synthesize "[happy] Welcome!" \\
+            --model eleven_v3
 
     \b
         # Read from stdin
@@ -83,6 +107,11 @@ def synthesize(text: str | None, stdin: bool, voice: str, output: Path | None, f
                    pcm_22050, pcm_24000, ulaw_8000
         Creator+:  mp3_44100_192
         Pro+:      pcm_44100
+
+    \b
+    Models:
+        Run 'elevenlabs-tty-tool list-models' to see all available models.
+        Note: Emotional tags ([happy], [sad], etc.) only work with eleven_v3.
     """
     try:
         # Get text from stdin or argument
@@ -101,6 +130,14 @@ def synthesize(text: str | None, stdin: bool, voice: str, output: Path | None, f
             )
             sys.exit(1)
 
+        # Validate model
+        model_id = validate_model(model)
+
+        # Show deprecation warning if needed
+        warning = get_deprecation_warning(model_id)
+        if warning:
+            click.echo(f"\n{warning}\n", err=True)
+
         # Initialize client and voice manager
         client = get_client()
         voice_manager = VoiceManager()
@@ -108,10 +145,10 @@ def synthesize(text: str | None, stdin: bool, voice: str, output: Path | None, f
 
         # Synthesize and play or save
         if output:
-            save_speech(client, input_text, voice_id, output, format)
+            save_speech(client, input_text, voice_id, output, format, model_id)
             click.echo(f"Audio saved to: {output}")
         else:
-            play_speech(client, input_text, voice_id, format)
+            play_speech(client, input_text, voice_id, format, model_id)
 
     except ValueError as e:
         click.echo(f"Error: {e}", err=True)

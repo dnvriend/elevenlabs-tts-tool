@@ -21,6 +21,8 @@ A command-line tool for ElevenLabs text-to-speech synthesis with human-friendly 
   - [Synthesize Command](#synthesize-command)
   - [List Voices](#list-voices)
   - [Update Voices](#update-voices)
+  - [Model Selection](#model-selection)
+  - [Subscription Info](#subscription-info)
 - [Advanced Features](#advanced-features)
   - [Emotion Control](#emotion-control)
   - [Pause Control (SSML)](#pause-control-ssml)
@@ -68,9 +70,11 @@ Traditional API wrappers force you to write code for every interaction. CLI-firs
 
 ## Features
 
-- ✅ **Two Synthesis Modes**: Play through speakers or save to WAV file
+- ✅ **Two Synthesis Modes**: Play through speakers or save to audio file
+- ✅ **8 TTS Models**: Choose from quality, speed, or emotional expression models
 - ✅ **42 Premium Voices**: Curated selection with human-friendly names (rachel, adam, charlotte, etc.)
-- ✅ **Voice Discovery**: List and filter voices by gender, age, and accent
+- ✅ **Voice & Model Discovery**: List voices and models with characteristics
+- ✅ **Emotional Expression**: Use `[happy]`, `[sad]`, etc. tags with v3 model
 - ✅ **Flexible Input**: Accept text from arguments or stdin (pipe support)
 - ✅ **CLI & Library**: Use as command-line tool or import as Python library
 - ✅ **Type Safety**: Strict mypy checks throughout
@@ -225,26 +229,185 @@ elevenlabs-tty-tool update-voices --output custom_voices.json
 
 The voice lookup is stored in `~/.config/elevenlabs-tty-tool/voices_lookup.json` and takes precedence over the package default.
 
+### Model Selection
+
+ElevenLabs offers multiple TTS models optimized for different use cases. Use the `--model` option with the `synthesize` command to select a model.
+
+#### List Available Models
+
+```bash
+# Show all available models with characteristics
+elevenlabs-tty-tool list-models
+```
+
+#### Current Generation Models
+
+**Eleven Turbo v2.5** (Default) - `eleven_turbo_v2_5`
+- Balanced quality and speed (~250ms latency)
+- 32 languages, 40,000 char limit
+- 50% cheaper per character
+- **Best for:** General-purpose TTS
+
+```bash
+elevenlabs-tty-tool synthesize "Hello world" --model eleven_turbo_v2_5
+```
+
+**Eleven Multilingual v2** - `eleven_multilingual_v2`
+- Highest production quality
+- 29 languages, 10,000 char limit
+- Medium latency
+- **Best for:** Professional content, e-learning
+
+```bash
+elevenlabs-tty-tool synthesize "Professional narration" --model eleven_multilingual_v2
+```
+
+**Eleven Flash v2.5** - `eleven_flash_v2_5`
+- Ultra-low latency (~75ms)
+- 32 languages, 40,000 char limit
+- 50% cheaper per character
+- **Best for:** Real-time agents, bulk processing
+
+```bash
+elevenlabs-tty-tool synthesize "Quick response" --model eleven_flash_v2_5
+```
+
+**Eleven v3 (Alpha)** - `eleven_v3`
+- Most emotionally expressive
+- 70+ languages, 5,000 char limit
+- Higher latency
+- **Best for:** Emotional dialogue, audiobooks
+- **Note:** Supports emotional tags (`[happy]`, `[sad]`, etc.)
+
+```bash
+elevenlabs-tty-tool synthesize "[happy] Welcome!" --model eleven_v3
+```
+
+#### Model Selection Examples
+
+```bash
+# Use highest quality model
+elevenlabs-tty-tool synthesize "Professional presentation" \
+    --voice rachel --model eleven_multilingual_v2
+
+# Ultra-fast real-time generation
+elevenlabs-tty-tool synthesize "Quick notification" \
+    --voice adam --model eleven_flash_v2_5
+
+# Emotional expression (requires v3)
+elevenlabs-tty-tool synthesize "[excited] Congratulations!" \
+    --voice charlotte --model eleven_v3 --output celebration.mp3
+
+# Pipe with model selection
+echo "Article content" | elevenlabs-tty-tool synthesize --stdin \
+    --voice daniel --model eleven_multilingual_v2 --output article.mp3
+```
+
+#### Legacy Models
+
+The following models are deprecated but still available:
+- `eleven_turbo_v2` - Superseded by Turbo v2.5 (50% cost savings)
+- `eleven_flash_v2` - Superseded by Flash v2.5
+- `eleven_monolingual_v1` - English-only (use `eleven_multilingual_v2` instead)
+- `eleven_multilingual_v1` - Use `eleven_multilingual_v2` instead
+
+**Warning:** Using deprecated models will show a deprecation notice. Migrate to current generation models for better performance and pricing.
+
+For detailed model information, see: [references/models.md](references/models.md)
+
+### Subscription Info
+
+View your ElevenLabs subscription status and usage statistics:
+
+```bash
+# View subscription info with last 7 days of usage
+elevenlabs-tty-tool info
+
+# View last 30 days of usage
+elevenlabs-tty-tool info --days 30
+
+# Quick quota check
+elevenlabs-tty-tool info --days 1
+```
+
+**Information Displayed:**
+- **Subscription Details:** Tier, status, voice slots, currency
+- **Character Usage:** Used/limit/remaining with percentage and visual bar
+- **Quota Reset:** When your character quota resets
+- **Historical Usage:** Daily usage breakdown for specified period
+- **Usage Statistics:** Average daily usage and projected monthly consumption
+- **Warnings:** Alerts when approaching quota limits (>75% or >90%)
+
+**Example Output:**
+```
+================================================================================
+ElevenLabs Subscription Information
+================================================================================
+
+Tier:           Free
+Status:         Active
+
+Character Usage:
+  Used:         8,543 characters
+  Limit:        10,000 characters
+  Remaining:    1,457 characters
+  Percentage:   85.4%
+  [████████████████████████████████████░░░░]
+
+Quota Resets:   2025-11-22 00:00:00
+                (Friday, November 22, 2025)
+
+Voice Slots:    3
+Currency:       USD
+
+================================================================================
+Historical Usage (Last 7 Days)
+================================================================================
+
+Date            Characters Used      Bar
+--------------------------------------------------------------------------------
+2025-11-15           1,234 chars    ██████████████████████████████
+2025-11-14             892 chars    ████████████████████
+2025-11-13           1,567 chars    ██████████████████████████████
+...
+--------------------------------------------------------------------------------
+Total:               8,543 chars
+
+Average daily usage: 1,220 characters
+Projected monthly:   36,600 characters
+
+================================================================================
+```
+
+**Use Cases:**
+- Monitor character quota consumption
+- Track usage patterns over time
+- Plan when to upgrade subscription tier
+- Avoid hitting quota limits unexpectedly
+- Understand daily/monthly usage trends
+
 ## Advanced Features
 
 ### Emotion Control
 
-ElevenLabs v3 models support emotional tags for expressive speech:
+ElevenLabs v3 model (`eleven_v3`) supports emotional tags for expressive speech:
 
 ```bash
-# Happy greeting
-elevenlabs-tty-tool synthesize "[happy] Welcome! We're excited to have you here."
+# Happy greeting (requires eleven_v3 model)
+elevenlabs-tty-tool synthesize "[happy] Welcome! We're excited to have you here." --model eleven_v3
 
 # Sad message
-elevenlabs-tty-tool synthesize "[sad] I'm sorry to hear that..."
+elevenlabs-tty-tool synthesize "[sad] I'm sorry to hear that..." --model eleven_v3
 
 # Excited announcement
-elevenlabs-tty-tool synthesize "[excited] Amazing news! Your project is approved!"
+elevenlabs-tty-tool synthesize "[excited] Amazing news! Your project is approved!" --model eleven_v3
 ```
 
 **Available Emotions:** `[happy]`, `[excited]`, `[sad]`, `[angry]`, `[nervous]`, `[curious]`, `[cheerfully]`, `[playfully]`, `[mischievously]`, `[resigned tone]`, `[flatly]`, `[deadpan]`
 
 **Speech Characteristics:** `[whispers]`, `[laughs]`, `[gasps]`, `[sighs]`, `[pauses]`, `[hesitates]`, `[stammers]`
+
+**Important:** Emotional tags only work with the `eleven_v3` model. They will be ignored on other models (v2.5, v2, etc.).
 
 ### Pause Control (SSML)
 

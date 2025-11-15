@@ -22,6 +22,7 @@ elevenlabs-tty-tool/
 │   ├── cli.py                   # CLI entry point (Click group)
 │   ├── voices.py                # Voice management (VoiceManager, VoiceProfile)
 │   ├── voices_lookup.json       # Voice lookup table (42 premium voices)
+│   ├── models.py                # Model management (ModelInfo, validation)
 │   ├── core/                    # Core library functions (importable, CLI-independent)
 │   │   ├── __init__.py
 │   │   ├── client.py           # ElevenLabs client initialization
@@ -30,14 +31,17 @@ elevenlabs-tty-tool/
 │   │   ├── __init__.py
 │   │   ├── synthesize_commands.py  # Synthesize command
 │   │   ├── voice_commands.py       # List-voices command
+│   │   ├── model_commands.py       # List-models, pricing commands
 │   │   └── update_voices_commands.py  # Update-voices command
 │   └── utils.py                 # Shared utilities
 ├── references/                  # Research documentation
 │   ├── free-tier.md            # Free tier limits and features
-│   └── emotions-and-pauses.md  # Emotion control, SSML, voice settings
+│   ├── emotions-and-pauses.md  # Emotion control, SSML, voice settings
+│   └── models.md               # Complete model guide
 ├── tests/                       # Test suite
 │   ├── test_utils.py
-│   └── test_voices.py
+│   ├── test_voices.py
+│   └── test_models.py
 ├── pyproject.toml               # Project configuration
 ├── Makefile                     # Development commands
 ├── README.md                    # User documentation
@@ -136,7 +140,9 @@ elevenlabs-tty-tool synthesize [TEXT] [OPTIONS]
 **Options:**
 - `--stdin, -s` - Read text from stdin instead of argument
 - `--voice, -v` - Voice name or ID (default: rachel)
-- `--output, -o PATH` - Save to WAV file instead of playing
+- `--model, -m` - Model ID (default: eleven_turbo_v2_5)
+- `--output, -o PATH` - Save to audio file instead of playing
+- `--format, -f` - Output format (default: mp3_44100_128)
 
 **Examples:**
 ```bash
@@ -146,11 +152,17 @@ elevenlabs-tty-tool synthesize "Hello world"
 # Use different voice
 elevenlabs-tty-tool synthesize "Hello" --voice adam
 
+# Use specific model
+elevenlabs-tty-tool synthesize "Hello" --model eleven_multilingual_v2
+
+# Emotional expression (requires eleven_v3)
+elevenlabs-tty-tool synthesize "[happy] Welcome!" --model eleven_v3
+
 # Read from stdin
 echo "Text" | elevenlabs-tty-tool synthesize --stdin
 
 # Save to file
-elevenlabs-tty-tool synthesize "Text" --output speech.wav
+elevenlabs-tty-tool synthesize "Text" --output speech.mp3
 ```
 
 ### list-voices
@@ -210,11 +222,138 @@ elevenlabs-tty-tool update-voices --output custom_voices.json
 - Creates config directory if it doesn't exist
 - Updates take precedence over package default
 
+### list-models
+
+List all available ElevenLabs TTS models with characteristics.
+
+**Signature:**
+```bash
+elevenlabs-tty-tool list-models
+```
+
+**Output Format:**
+```
+Current Generation Models:
+
+1. Eleven v3 (Alpha) - eleven_v3
+   - Most emotionally expressive
+   - 70+ languages
+   - 5,000 char limit
+   - High latency
+   - Best for: Emotional dialogue, audiobooks
+   - Note: Alpha release - may have inconsistencies. Generate multiple options.
+
+2. Eleven Multilingual v2 - eleven_multilingual_v2
+   - Highest production quality
+   - 29 languages
+   - 10,000 char limit
+   - Medium latency
+   - Best for: Professional content, e-learning
+
+...
+
+Legacy Models (Deprecated):
+
+- eleven_turbo_v2
+  Superseded by Turbo v2.5. Migrate for 50% cost savings.
+```
+
+**Examples:**
+```bash
+# List all models
+elevenlabs-tty-tool list-models
+
+# Filter by status
+elevenlabs-tty-tool list-models | grep stable
+elevenlabs-tty-tool list-models | grep deprecated
+
+# Find specific features
+elevenlabs-tty-tool list-models | grep -i "ultra-low"
+```
+
+### pricing
+
+Display ElevenLabs pricing tiers and features.
+
+**Signature:**
+```bash
+elevenlabs-tty-tool pricing
+```
+
+**Output Information:**
+- Pricing tiers (Free, Starter, Creator, Pro, Scale, Business)
+- Minutes included per tier
+- Additional minute costs
+- Audio quality options
+- Concurrency limits
+- Priority levels
+- API formats by tier
+- Model cost multipliers (v3 = 2x cost)
+
+**Examples:**
+```bash
+# View full pricing table
+elevenlabs-tty-tool pricing
+
+# Find specific tier information
+elevenlabs-tty-tool pricing | grep Creator
+elevenlabs-tty-tool pricing | grep "44.1kHz PCM"
+```
+
+**Key Insights:**
+- v3 models cost 2x as much as Flash/Turbo models (half the minutes/tokens)
+- Use Flash v2.5 for high-volume Claude Code integrations
+- Reserve v3 for content requiring emotional expression
+
+### info
+
+Display subscription and usage information.
+
+**Signature:**
+```bash
+elevenlabs-tty-tool info [OPTIONS]
+```
+
+**Options:**
+- `--days, -d` - Number of days of historical usage to display (default: 7)
+
+**Output Information:**
+- Subscription tier and status
+- Character usage (used/limit/remaining)
+- Quota reset date
+- Historical usage breakdown by day
+- Average daily usage
+- Projected monthly usage
+- Warnings when approaching quota limits
+
+**Examples:**
+```bash
+# View subscription with last 7 days of usage
+elevenlabs-tty-tool info
+
+# View last 30 days of usage
+elevenlabs-tty-tool info --days 30
+
+# Quick quota check (1 day)
+elevenlabs-tty-tool info --days 1
+```
+
+**Use Cases:**
+- Monitor character quota consumption
+- Track usage patterns over time
+- Plan when to upgrade subscription tier
+- Avoid hitting quota limits unexpectedly
+- Identify high-usage periods
+
+**API Endpoints Used:**
+- `client.user.subscription.get()` - Current subscription info
+- `client.usage.get()` - Historical usage metrics
+
 ## Advanced Features
 
 ### Emotion Control
 
-ElevenLabs v3 models (Turbo V2.5) support **Audio Tags** for emotional expression.
+ElevenLabs v3 model (`eleven_v3`) supports **Audio Tags** for emotional expression.
 
 **Available Emotion Tags:**
 - `[happy]`, `[excited]`, `[sad]`, `[angry]`, `[nervous]`, `[curious]`
@@ -225,11 +364,11 @@ ElevenLabs v3 models (Turbo V2.5) support **Audio Tags** for emotional expressio
 
 **Usage:**
 ```bash
-# Basic emotion
-elevenlabs-tty-tool synthesize "[happy] Welcome to our service!"
+# Basic emotion (requires eleven_v3 model)
+elevenlabs-tty-tool synthesize "[happy] Welcome to our service!" --model eleven_v3
 
 # Multiple emotions in sequence
-elevenlabs-tty-tool synthesize "[excited] Great news! [cheerfully] Your project is approved!"
+elevenlabs-tty-tool synthesize "[excited] Great news! [cheerfully] Your project is approved!" --model eleven_v3
 ```
 
 **Best Practices:**
@@ -255,8 +394,8 @@ elevenlabs-tty-tool synthesize "Welcome <break time=\"1.0s\" /> to our service."
 # Multiple pauses
 elevenlabs-tty-tool synthesize "Point one <break time=\"0.5s\" /> Point two <break time=\"0.5s\" /> Point three."
 
-# Combine with emotions
-elevenlabs-tty-tool synthesize "[happy] Hello! <break time=\"0.5s\" /> [cheerfully] How are you?"
+# Combine with emotions (requires eleven_v3)
+elevenlabs-tty-tool synthesize "[happy] Hello! <break time=\"0.5s\" /> [cheerfully] How are you?" --model eleven_v3
 ```
 
 **Limitations:**

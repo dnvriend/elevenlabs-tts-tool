@@ -6,11 +6,18 @@ and has been reviewed and tested by a human.
 
 import click
 
-from elevenlabs_tty_tool.commands import list_voices, synthesize, update_voices
+from elevenlabs_tty_tool.commands import (
+    info,
+    list_models,
+    list_voices,
+    pricing,
+    synthesize,
+    update_voices,
+)
 
 
 @click.group()
-@click.version_option(version="0.1.0")
+@click.version_option(version="0.2.0")
 def main() -> None:
     """
     ElevenLabs TTS CLI - Professional text-to-speech synthesis.
@@ -23,6 +30,9 @@ def main() -> None:
 # Register commands
 main.add_command(synthesize)
 main.add_command(list_voices)
+main.add_command(list_models)
+main.add_command(pricing)
+main.add_command(info)
 main.add_command(update_voices)
 
 

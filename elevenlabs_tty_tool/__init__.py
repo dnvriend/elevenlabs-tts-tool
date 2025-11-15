@@ -11,7 +11,7 @@ and has been reviewed and tested by a human.
 from elevenlabs_tty_tool.core import get_client, play_speech, save_speech
 from elevenlabs_tty_tool.voices import VoiceManager, VoiceProfile
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "get_client",

@@ -1,6 +1,6 @@
 [project]
 name = "elevenlabs-tty-tool"
-version = "0.1.0"
+version = "0.2.0"
 description = "Professional command-line tool for ElevenLabs text-to-speech synthesis"
 requires-python = ">=3.13"
 dependencies = [

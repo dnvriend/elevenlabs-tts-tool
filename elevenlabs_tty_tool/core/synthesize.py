@@ -51,7 +51,11 @@ def synthesize_audio(
 
 
 def play_speech(
-    client: ElevenLabs, text: str, voice_id: str, output_format: str = "mp3_44100_128"
+    client: ElevenLabs,
+    text: str,
+    voice_id: str,
+    output_format: str = "mp3_44100_128",
+    model_id: str = "eleven_turbo_v2_5",
 ) -> None:
     """
     Synthesize text and play through speakers.
@@ -61,12 +65,13 @@ def play_speech(
         text: Text to convert to speech.
         voice_id: Voice ID to use for synthesis.
         output_format: Output format (default: mp3_44100_128).
+        model_id: Model ID (default: eleven_turbo_v2_5).
 
     Raises:
         Exception: If synthesis or playback fails.
     """
     try:
-        audio = synthesize_audio(client, text, voice_id, output_format)
+        audio = synthesize_audio(client, text, voice_id, output_format, model_id)
         play(audio)
     except Exception as e:
         raise Exception(f"Playback failed: {e}") from e
@@ -78,6 +83,7 @@ def save_speech(
     voice_id: str,
     output_path: Path,
     output_format: str = "mp3_44100_128",
+    model_id: str = "eleven_turbo_v2_5",
 ) -> None:
     """
     Synthesize text and save to audio file.
@@ -89,6 +95,7 @@ def save_speech(
         output_path: Path where to save the audio file.
         output_format: Output format (default: mp3_44100_128).
             Use pcm_* formats for WAV files (e.g., pcm_44100).
+        model_id: Model ID (default: eleven_turbo_v2_5).
 
     Raises:
         Exception: If synthesis or file save fails.
@@ -97,7 +104,7 @@ def save_speech(
         # Ensure parent directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        audio = synthesize_audio(client, text, voice_id, output_format)
+        audio = synthesize_audio(client, text, voice_id, output_format, model_id)
         save(audio, str(output_path))
     except Exception as e:
         raise Exception(f"Failed to save audio: {e}") from e
